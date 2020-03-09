@@ -19,7 +19,8 @@ def input_info():
 
 def get_subject(hostname, username, password):
     with IMAPClient(host=hostname) as client:
-        client.login(username, password)
+        login = client.login(username, password)
+        print(login.decode())
         client.select_folder('INBOX')
 
         msg = client.search(['SUBJECT', u'開催通知'], charset='utf-8')
@@ -63,7 +64,7 @@ def parse_args():
     parser.add_argument('-t', '--type',
                         help='specify display type', type=str,
                         choices=['today', 'tomorrow', 'this_week', 'next_week'],
-                        default='day')
+                        default='today')
 
     args = parser.parse_args()
     return args
