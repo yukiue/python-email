@@ -121,14 +121,17 @@ def parse_args():
 
 def main():
     args = parse_args()
-    _type = args.type
+
     if args.file:
         hostname, username, password = read_info()
     else:
         hostname, username, password = input_info()
+    
     subj_list = get_subjects(hostname, username, password)
     all_event_list = get_events(subj_list)
     today = datetime.date.today()
+
+    _type = args.type
     if _type == 'today':
         event_list = ext_day_events(all_event_list, today)
     elif _type == 'tomorrow':
@@ -144,6 +147,7 @@ def main():
 
     for event in event_list:
         print(event)
+
 
 if __name__ == "__main__":
     main()
