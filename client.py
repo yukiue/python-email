@@ -4,6 +4,7 @@ import email
 from imapclient import IMAPClient
 from email.header import decode_header, make_header
 from getpass import getpass
+import re
 import datetime
 import argparse
 
@@ -17,7 +18,7 @@ def input_info():
     return hostname, username, password
 
 
-def get_subject(hostname, username, password):
+def get_subjects(hostname, username, password):
     with IMAPClient(host=hostname) as client:
         login = client.login(username, password)
         print(login.decode())
@@ -33,29 +34,55 @@ def get_subject(hostname, username, password):
             # subj = str(make_header(decode_header(email_msg["Subject"])))
 
             subj = str(make_header(decode_header(email_msg.get("Subject"))))
-            subj_list.append(subj)
+            if subj.startswith("(開催通知)"):
+                subj_list.append(subj)
 
         return subj_list
 
 
-def ext_day_events(subj_list, date):
+def get_events(subj_list):
+    all_event_list = []
     for subj in subj_list:
-        if 'Re:' not in subj and len(subj.split()) == 5:
-            subj_sep = subj.split()
-            if str(date.month) + '/' + str(date.day) == subj_sep[2]:
-                print(subj_sep[1], subj_sep[2], subj_sep[3], subj_sep[4])
+        event = subj.split(maxsplit=1)[1]
+        all_event_list.append(event)
+
+    return all_event_list
 
 
-def ext_week_events(subj_list, date):
+def ext_day_events(all_event_list, date):
+    event_dict = {}
+    for event in all_event_list:
+        regex = re.compile(r'(.+)\s(\d{1,2})/(\d{1,2})\s\((\w)\)\s(\d{1,2}):(\d{1,2})〜(\d{1,2}):(\d{1,2})')
+        mo = regex.search(event)
+        info = {}
+        if mo is not None:
+            if mo.group(2) == str(date.month) and mo.group(3) == str(date.day):
+                info['name'] = mo.group(1)
+                info['month'] = mo.group(2)
+                info['day'] = mo.group(3)
+                info['weekday'] = mo.group(4)
+                info['start'] = datetime.time(int(mo.group(5)), int(mo.group(6)))
+                info['end'] = datetime.time(int(mo.group(7)), int(mo.group(8)))
+                event_dict[event] = info
+
+    event_list = sorted(event_dict.keys(), key=lambda e:event_dict[e]["start"])
+
+    return event_list
+
+
+def ext_week_events(all_event_list, date):
     def beginning_week(date):
         weekday = date.weekday()
         return date - datetime.timedelta(days=weekday)
 
     beginning_week = beginning_week(date)
 
+    event_list = []
     for i in range(7):
         d = beginning_week + datetime.timedelta(days=i)
-        ext_day_events(subj_list, d)
+        event_list += ext_day_events(all_event_list, d)
+
+    return event_list
 
 
 def parse_args():
@@ -74,17 +101,20 @@ def main():
     args = parse_args()
     _type = args.type
     hostname, username, password = input_info()
-    subj_list = get_subject(hostname, username, password)
+    subj_list = get_subjects(hostname, username, password)
+    all_event_list = get_events(subj_list)
     today = datetime.date.today()
     if _type == 'today':
-        ext_day_events(subj_list, today)
+        event_list = ext_day_events(all_event_list, today)
     elif _type == 'tomorrow':
-        ext_day_events(subj_list, today + datetime.timedelta(days=1))
+        event_list = ext_day_events(all_event_list, today + datetime.timedelta(days=1))
     elif _type == 'this_week':
-        ext_week_events(subj_list, today)
+        event_list = ext_week_events(all_event_list, today)
     elif _type == 'next_week':
-        ext_week_events(subj_list, today + datetime.timedelta(weeks=1))
+        event_list = ext_week_events(all_event_list, today + datetime.timedelta(weeks=1))
 
+    for event in event_list:
+        print(event)
 
 if __name__ == "__main__":
     main()
