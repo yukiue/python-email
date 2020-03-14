@@ -54,20 +54,11 @@ def ext_day_events(all_event_list, date):
     for event in all_event_list:
         regex = re.compile(r'(.+)\s(\d{1,2})/(\d{1,2})\s\((\w)\)\s(\d{1,2}):(\d{1,2})〜(\d{1,2}):(\d{1,2})')
         mo = regex.search(event)
-        info = {}
         if mo is not None:
             if mo.group(2) == str(date.month) and mo.group(3) == str(date.day):
-                info['name'] = mo.group(1)
-                info['month'] = mo.group(2)
-                info['day'] = mo.group(3)
-                info['weekday'] = mo.group(4)
-                info['start'] = datetime.time(int(mo.group(5)), int(mo.group(6)))
-                info['end'] = datetime.time(int(mo.group(7)), int(mo.group(8)))
-                event_dict[event] = info
+                event_dict[event] = datetime.time(int(mo.group(5)), int(mo.group(6)))
 
-    event_list = sorted(event_dict.keys(), key=lambda e:event_dict[e]["start"])
-
-    return event_list
+    return sorted(event_dict.keys(), key=lambda e:event_dict[e])
 
 
 def ext_week_events(all_event_list, date):
