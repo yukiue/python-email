@@ -4,6 +4,7 @@ import email
 from imapclient import IMAPClient
 from email.header import decode_header, make_header
 from getpass import getpass
+import configparser
 import re
 import datetime
 import calendar
@@ -18,6 +19,15 @@ def input_info():
 
     return hostname, username, password
 
+
+def read_info():
+    config = configparser.ConfigParser()
+    config.read('.client.ini')
+    hostname = config['info']['hostname']
+    username = config['info']['username']
+    password = config['info']['password']
+
+    return hostname, username, password
 
 def get_subjects(hostname, username, password):
     with IMAPClient(host=hostname) as client:
@@ -98,8 +108,12 @@ def parse_args():
 
     parser.add_argument('-t', '--type',
                         help='specify display type', type=str,
-                        choices=['today', 'tomorrow', 'this_week', 'next_week', 'this_month'],
+                        choices=['today', 'tomorrow', 'this_week', 'next_week', 'this_month', 'all'],
                         default='today')
+    parser.add_argument('-f', '--file',
+                        help='read login information from file',
+                        action='store_true',
+                        )
 
     args = parser.parse_args()
     return args
@@ -108,7 +122,10 @@ def parse_args():
 def main():
     args = parse_args()
     _type = args.type
-    hostname, username, password = input_info()
+    if args.file:
+        hostname, username, password = read_info()
+    else:
+        hostname, username, password = input_info()
     subj_list = get_subjects(hostname, username, password)
     all_event_list = get_events(subj_list)
     today = datetime.date.today()
@@ -122,6 +139,8 @@ def main():
         event_list = ext_week_events(all_event_list, today + datetime.timedelta(weeks=1))
     elif _type == 'this_month':
         event_list = ext_month_events(all_event_list, today)
+    elif _type == 'all':
+        event_list = all_event_list
 
     for event in event_list:
         print(event)
