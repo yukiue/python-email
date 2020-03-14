@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 
-import email
-from imapclient import IMAPClient
-from email.header import decode_header, make_header
-from getpass import getpass
-import configparser
 import re
 import datetime
 import calendar
 import argparse
+import configparser
+from getpass import getpass
+import email
+from imapclient import IMAPClient
+from email.header import decode_header, make_header
 
 
 def input_info():
@@ -104,14 +104,14 @@ def ext_month_events(all_event_list, date):
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(description= '\033[35m' + 'extract events from e-mail' + '\033[0m')
+    parser = argparse.ArgumentParser(description='extract events from emails')
 
     parser.add_argument('-t', '--type',
                         help='specify display type', type=str,
                         choices=['today', 'tomorrow', 'this_week', 'next_week', 'this_month', 'all'],
                         default='today')
     parser.add_argument('-f', '--file',
-                        help='read login information from file',
+                        help='read your login information from config file',
                         action='store_true',
                         )
 
