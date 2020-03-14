@@ -6,6 +6,7 @@ from email.header import decode_header, make_header
 from getpass import getpass
 import re
 import datetime
+import calendar
 import argparse
 
 
@@ -76,12 +77,28 @@ def ext_week_events(all_event_list, date):
     return event_list
 
 
+def ext_month_events(all_event_list, date):
+    def beginning_month(date):
+        day = date.day
+        return date - datetime.timedelta(days=day-1)
+
+    beginning_month = beginning_month(date)
+    month_range = calendar.monthrange(date.year, date.month)
+
+    event_list = []
+    for i in range(month_range[1]):
+        d = beginning_month + datetime.timedelta(days=i)
+        event_list += ext_day_events(all_event_list, d)
+
+    return event_list
+
+
 def parse_args():
-    parser = argparse.ArgumentParser(description='extract events from e-mail')
+    parser = argparse.ArgumentParser(description= '\033[35m' + 'extract events from e-mail' + '\033[0m')
 
     parser.add_argument('-t', '--type',
                         help='specify display type', type=str,
-                        choices=['today', 'tomorrow', 'this_week', 'next_week'],
+                        choices=['today', 'tomorrow', 'this_week', 'next_week', 'this_month'],
                         default='today')
 
     args = parser.parse_args()
@@ -103,6 +120,8 @@ def main():
         event_list = ext_week_events(all_event_list, today)
     elif _type == 'next_week':
         event_list = ext_week_events(all_event_list, today + datetime.timedelta(weeks=1))
+    elif _type == 'this_month':
+        event_list = ext_month_events(all_event_list, today)
 
     for event in event_list:
         print(event)
