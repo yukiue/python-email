@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
 
-import re
-import datetime
-import calendar
 import argparse
+import calendar
 import configparser
-from getpass import getpass
+import datetime
 import email
-from imapclient import IMAPClient
+import re
 from email.header import decode_header, make_header
+from getpass import getpass
+
+from imapclient import IMAPClient
 
 
 def input_info():
@@ -28,6 +29,7 @@ def read_info():
     password = config['info']['password']
 
     return hostname, username, password
+
 
 def get_subjects(hostname, username, password):
     with IMAPClient(host=hostname) as client:
@@ -126,7 +128,7 @@ def main():
         hostname, username, password = read_info()
     else:
         hostname, username, password = input_info()
-    
+
     subj_list = get_subjects(hostname, username, password)
     all_event_list = get_events(subj_list)
     today = datetime.date.today()
