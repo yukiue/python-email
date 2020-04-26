@@ -65,13 +65,18 @@ def get_events(subj_list):
 def ext_day_events(all_event_list, date):
     event_dict = {}
     for event in all_event_list:
-        regex = re.compile(r'(.+)\s(\d{1,2})/(\d{1,2})\s\((\w)\)\s(\d{1,2}):(\d{1,2})〜(\d{1,2}):(\d{1,2})')
+        regex = re.compile(
+            r'(.+)\s(\d{4})-(\d{2})-(\d{2})\s\((\w)\)\s(\d{2}):(\d{2})/(\d{2}):(\d{2})'
+        )
         mo = regex.search(event)
-        if mo is not None:
-            if mo.group(2) == str(date.month) and mo.group(3) == str(date.day):
-                event_dict[event] = datetime.time(int(mo.group(5)), int(mo.group(6)))
 
-    return sorted(event_dict.keys(), key=lambda e:event_dict[e])
+        if mo is not None:
+            if str(int(mo.group(3))) == str(date.month) and str(
+                    int(mo.group(4))) == str(date.day):
+                event_dict[event] = datetime.time(int(mo.group(6)),
+                                                  int(mo.group(7)))
+
+    return sorted(event_dict.keys(), key=lambda e: event_dict[e])
 
 
 def ext_week_events(all_event_list, date):
@@ -92,7 +97,7 @@ def ext_week_events(all_event_list, date):
 def ext_month_events(all_event_list, date):
     def beginning_month(date):
         day = date.day
-        return date - datetime.timedelta(days=day-1)
+        return date - datetime.timedelta(days=day - 1)
 
     beginning_month = beginning_month(date)
     month_range = calendar.monthrange(date.year, date.month)
@@ -108,14 +113,21 @@ def ext_month_events(all_event_list, date):
 def parse_args():
     parser = argparse.ArgumentParser(description='extract events from emails')
 
-    parser.add_argument('-t', '--type',
-                        help='specify display type', type=str,
-                        choices=['today', 'tomorrow', 'this_week', 'next_week', 'this_month', 'all'],
+    parser.add_argument('-t',
+                        '--type',
+                        help='specify display type',
+                        type=str,
+                        choices=[
+                            'today', 'tomorrow', 'this_week', 'next_week',
+                            'this_month', 'all'
+                        ],
                         default='today')
-    parser.add_argument('-f', '--file',
-                        help='read your login information from config file',
-                        action='store_true',
-                        )
+    parser.add_argument(
+        '-f',
+        '--file',
+        help='read your login information from config file',
+        action='store_true',
+    )
 
     args = parser.parse_args()
     return args
@@ -137,11 +149,13 @@ def main():
     if _type == 'today':
         event_list = ext_day_events(all_event_list, today)
     elif _type == 'tomorrow':
-        event_list = ext_day_events(all_event_list, today + datetime.timedelta(days=1))
+        event_list = ext_day_events(all_event_list,
+                                    today + datetime.timedelta(days=1))
     elif _type == 'this_week':
         event_list = ext_week_events(all_event_list, today)
     elif _type == 'next_week':
-        event_list = ext_week_events(all_event_list, today + datetime.timedelta(weeks=1))
+        event_list = ext_week_events(all_event_list,
+                                     today + datetime.timedelta(weeks=1))
     elif _type == 'this_month':
         event_list = ext_month_events(all_event_list, today)
     elif _type == 'all':
